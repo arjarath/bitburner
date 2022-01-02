@@ -1,12 +1,12 @@
 //COPY FILES TO ALL KNOWN SERVERS
 //This script copy a script(s) to a host server, it hacks the server if you don't have access to it, it reads how many threads the server has and execute
 //your script accordingly
-files = "scriptprincipal.script";
+files = "hack_simple.script";
 
-serverlist = ["darkweb", "iron-gym", "harakiri-sushi", "hong-fang-tea", "max-hardware", "omega-net", "avmnite-02h", "phantasy", "neo-net", "johnson-ortho", "catalyst", "aevum-police", "alpha-ent", "aerocorp", "netlink", "I.I.I.I", "zb-institute", "the-hub", "joesguns", "zer0", "sigma-cosmetics", "foodnstuff", "CSEC", "n00dles", "nectar-net", "silver-helix", "crush-fitness", "rothman-uni", "rho-construction", "snap-fitness", "deltaone", "zeus-med", "nova-med", "microdyne", "stormtech", "omnitek", "clarkinc", "megacorp", "nwo", "fulcrumassets", "ecorp", "titan-labs", "vitalife", "4sigma", "powerhouse-fitness", "The-Cave", "b-and-a", "infocomm", "applied-energetics", "helios", "kuai-gong", "blade", "univ-energy", "icarus", "taiyang-digital", "run4theh111z", "fulcrumtech", ".", "defcomm", "zb-def", "global-pharm", "unitalife", "comptek", "syscore", "lexo-corp", "galactic-cyber", "omnia", "solaris", "summit-uni", "millenium-fitness"
-];
-
+// LIST IS IN ORDER OF LEVEL
+serverlist = ["foodnstuff", "sigma-cosmetics", "joesguns", "nectar-net", "hong-fang-tea", "harakiri-sushi", "neo-net", "zer0", "max-hardware", "iron-gym", "phantasy", "silver-helix", "omega-net", "crush-fitness", "johnson-ortho", "the-hub", "comptek", "netlink", "rothman-uni", "catalyst", "summit-uni", "rho-construction", "millenium-fitness", "aevum-police", "alpha-ent", "syscore", "lexo-corp", "snap-fitness", "global-pharm", "applied-energetics", "unitalife", "univ-energy", "nova-med", "zb-def", "zb-institute", "vitalife", "titan-labs", "solaris", "microdyne", "helios", "deltaone", "icarus", "zeud-med", "omnia", "defcomm", "galactic-cyber", "infocomm", "taiyang-digital", "stormtech", "aerocorp", "clarkeinc", "omnitek", "nwo", "4sigma", "blade", "b-and-a", "ecorp", "fulcrumtech", "megacorp", "kuai-gong", "fulcrumassets", "powerhouse-fitness"];
 var length = serverlist.length;
+var servers_hacked = [];
 
 var i;
 for (i = 0; i < length; i = i + 1) {
@@ -14,19 +14,43 @@ for (i = 0; i < length; i = i + 1) {
 	scp(files, "home", serverlist[i]);
 	if (getServerRequiredHackingLevel(serverlist[i]) > getHackingLevel()) {
 		tprint("You don't have enough level to hack this server.");
-		continue;
+		break;
 	}
+
 	//HACKING
 	tprint("\nTest and hacking server: " + serverlist[i]);
-	if (!hasRootAccess(serverlist[i])) {
-		brutessh(serverlist[i]);
-		ftpcrack(serverlist[i]);
-		relaysmtp(serverlist[i]);
-		httpworm(serverlist[i]);
-		sqlinject(serverlist[i]);
-		nuke(serverlist[i]);
+	var num_ports_acessible = 0;
+	var working_server = serverlist[i];
+	if (!hasRootAccess(working_server)) {
+		tprint("Don't have root access on " + working_server)
+		if (fileExists('BruteSSH.exe')) {
+			brutessh(working_server);
+			num_ports_acessible++;
+		}
+		if (fileExists('FTPCrack.exe')) {
+			ftpcrack(working_server);
+			num_ports_acessible++;
+		}
 
+		if (fileExists('relaySMTP.exe')) {
+			relaysmtp(working_server);
+			num_ports_acessible++;
+		}
+
+		if (fileExists('HTTPWorm.exe')) {
+			httpworm(working_server);
+			num_ports_acessible++;
+		}
+
+		if (fileExists('SQLInject.exe')) {
+			sqlinject(working_server);
+			num_ports_acessible++;
+		}
+
+		if (getServerNumPortsRequired(working_server) <= num_ports_acessible)
+			nuke(working_server);
 	}
+
 
 	//THREADS TO RUN SCRIPT
 	var server_ram = getServerRam(serverlist[i])[0];
@@ -43,5 +67,11 @@ for (i = 0; i < length; i = i + 1) {
 	//EXECUTE SCRIPT
 	print("\nKilling and Executing Script on: " + serverlist[i]);
 	killall(serverlist[i]);
-	exec(files, serverlist[i], threads);
+	var pid = exec(files, serverlist[i], threads);
+
+	if (pid != 0){
+		servers_hacked++;
+	}
 }
+
+tprint("# of servers hacked: " + servers_hacked);
